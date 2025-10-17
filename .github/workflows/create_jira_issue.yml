@@ -134,8 +134,9 @@ jobs:
               issue_number: issueNumber
             });
             const body = [
-              `🔀 브랜치: ${branchName}`,
-              `⚡ Jira 이슈 생성: [${jiraKey}](${process.env.JIRA_BASE_URL}/browse/${jiraKey})`
+              `📝 Jira 이슈 생성: [${jiraKey}](${process.env.JIRA_BASE_URL}/browse/${jiraKey})`,
+              `🔀 브랜치: \`${branchName}\``,
+              `💻 Checkout 명령어: \`git checkout ${branchName}\``
             ].join("\n")
             
             if (!comments.data.some(c => c.body.includes(jiraKey))) {
