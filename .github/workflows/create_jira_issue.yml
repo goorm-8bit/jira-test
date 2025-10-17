@@ -4,9 +4,12 @@ on:
   issues:
     types:
       - opened
+      - reopened
 
 jobs:
   create-jira-issue:
+    if: "!contains(github.event.issue.labels.*.name, 'jira')"
+
     runs-on: ubuntu-latest
 
     steps:
