@@ -45,5 +45,5 @@ jobs:
               body: body,
               labels: labels
             });
-          env:
-            JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
