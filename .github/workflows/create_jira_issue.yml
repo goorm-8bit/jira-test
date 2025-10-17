@@ -82,7 +82,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const jiraKey = '${{ steps.jira_issue_creation.outputs.issue }}';
+            const jiraKey = '${{ steps.jira_issue_creation.outputs.jiraKey }}';
 
             // GitHub 이벤트 payload에서 issue 가져오기
             const issue = context.payload.issue;
