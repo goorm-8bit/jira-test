@@ -1,0 +1,49 @@
+name: Create Jira Issue on GitHub Issue Open
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  create-jira-issue:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create Issue in Jira
+        uses: atlassian/gajira-create-issue@v3
+        with:
+        jira-base-url: ${{ secrets.JIRA_BASE_URL }}
+        jira-user-email: ${{ secrets.JIRA_USER_EMAIL }}
+        jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
+        project: ${{ secrets.JIRA_KEY }}
+        issueType:
+        summary: ${{ github.event.issue.title }}
+        description: |
+          [GitHub Issue Link](${{ github.event.issue.html_url }})
+
+          **Description:**
+          ${{ github.event.issue.body }}
+
+      - name: Add Jira Key to Github Issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const jiraKey = '${{ steps.jira_issue_creation.outputs.issue }}';
+            
+            // 1. GitHub 이슈 본문에 Jira 링크 추가
+            const body = `${{ github.event.issue.body }}\n\n---
+            **[Jira Issue](${ process.env.JIRA_BASE_URL }/browse/${jiraKey})**`;
+            
+            // 2. 중복 생성 방지 레이블 및 GitHub 레이블 추가
+            const labels = [...github.event.issue.labels.map(l => l.name), 'synced-from-jira'];
+            
+            github.rest.issues.update({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body,
+              labels: labels
+            });
+          env:
+            JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
