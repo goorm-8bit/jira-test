@@ -10,20 +10,63 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create Issue in Jira
-        uses: atlassian/gajira-create-issue@v3
+      - name: Create Issue in Jira (via REST API)
+        id: jira_issue_creation
+        uses: actions/github-script@v6
         with:
-          jira-base-url: ${{ secrets.JIRA_BASE_URL }}
-          jira-user-email: ${{ secrets.JIRA_USER_EMAIL }}
-          jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
-          project: ${{ secrets.JIRA_KEY }}
-          issueType:
-          summary: ${{ github.event.issue.title }}
-          description: |
-            [GitHub Issue Link](${{ github.event.issue.html_url }})
+          # 스크립트 실행을 위해 Node.js 환경에서 JIRA_BASE_URL 필요
+          script: |
+            const JIRA_API_ENDPOINT = `${process.env.JIRA_BASE_URL}/rest/api/3/issue`;
+            const JIRA_PROJECT_KEY = process.env.JIRA_PROJECT_KEY;
             
-            **Description:**
-            ${{ github.event.issue.body }}
+            // Jira 요청 본문 (Body) 구성
+            const issueData = {
+              fields: {
+                project: { key: JIRA_PROJECT_KEY },
+                summary: context.payload.issue.title,
+                issuetype: { name: 'Story' }, // 👈 이슈 타입 설정
+                description: {
+                  type: 'doc',
+                  version: 1,
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [{
+                        type: 'text',
+                        text: `[GitHub Issue Link](${context.payload.issue.html_url})\n\nDescription:\n${context.payload.issue.body}`
+                      }]
+                    }
+                  ]
+                }
+              }
+            };
+            
+            // Jira API 호출 (fetch 사용)
+            const response = await fetch(JIRA_API_ENDPOINT, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Basic ${Buffer.from(`${process.env.JIRA_USER_EMAIL}:${process.env.JIRA_API_TOKEN}`).toString('base64')}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(issueData),
+            });
+            
+            if (!response.ok) {
+              const errorBody = await response.text();
+              throw new Error(`Jira API failed: ${response.statusText}. Response: ${errorBody}`);
+            }
+            
+            const jiraIssue = await response.json();
+            
+            // 다음 단계에서 사용할 Jira Key를 출력 (outputs)
+            console.log(`Jira Issue created: ${jiraIssue.key}`);
+            core.setOutput('issue', jiraIssue.key); # 👈 다음 스텝에서 참조하기 위해 issue key를 output으로 설정
+
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ env.JIRA_PROJECT_KEY }} # 👈 상위 env 변수 사용
 
       - name: Add Jira Key to Github Issue
         uses: actions/github-script@v6
