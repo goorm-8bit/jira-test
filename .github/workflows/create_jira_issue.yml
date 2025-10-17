@@ -23,7 +23,7 @@ jobs:
               fields: {
                 project: { key: JIRA_PROJECT_KEY },
                 summary: context.payload.issue.title,
-                issuetype: { name: 'Story' },
+                issuetype: { name: '작업' },
                 description: {
                   type: 'doc',
                   version: 1,
