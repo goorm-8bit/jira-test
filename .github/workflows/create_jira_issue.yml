@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Jira Issue 생성
       - name: Create Issue in Jira
         id: jira_issue_creation
         uses: actions/github-script@v6
         with:
-          # 스크립트 실행을 위해 Node.js 환경에서 JIRA_BASE_URL 필요
           script: |
             const JIRA_API_ENDPOINT = `${process.env.JIRA_BASE_URL}/rest/api/3/issue`;
             const JIRA_PROJECT_KEY = process.env.JIRA_PROJECT_KEY;
@@ -55,10 +55,8 @@ jobs:
             }
             
             const jiraIssue = await response.json();
-            
             console.log(`Jira Issue created: ${jiraIssue.key}`);
             core.setOutput('issue', jiraIssue.key);
-
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
@@ -76,9 +74,9 @@ jobs:
             if (!issue) {
               throw new Error("This workflow was not triggered by an issue event.");
             }
-            
+
             // 1. 제목 앞에 [JIRA-KEY] 붙이기
-            const newTitle = `[${jiraKey}] ${issue.title}`;
+            const newTitle = `[${jiraKey}]${issue.title}`;
             
             // 2. 본문 뒤에 Jira 링크 추가
             const newBody = `${issue.body || ""}\n\n\n**[Jira Issue](${process.env.JIRA_BASE_URL}/browse/${jiraKey})**`;
@@ -97,3 +95,34 @@ jobs:
             });
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+
+      - name: 브랜치 생성
+        run: |
+          TYPE=$(echo "${{ github.event.issue.title }}" | grep -oP '(?<=\]\[).+?(?=\])' | tr '[:upper:]' '[:lower:]')
+          JIRA_KEY=${{ steps.jira_issue_creation.outputs.jiraKey }}
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          BRANCH_NAME="$TYPE/$JIRA_KEY-$ISSUE_NUMBER"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git checkout -b $BRANCH_NAME
+          git push origin $BRANCH_NAME
+
+      - name: Comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const jiraKey='${{ steps.jira_issue_creation.outputs.jiraKey }}';
+            const issueNumber=${{ github.event.issue.number }};
+            const branchName=process.env.BRANCH_NAME;
+
+            const comments = await github.rest.issues.listComments({ owner: context.repo.owner, repo: context.repo.repo, issue_number: issueNumber });
+            if (!comments.data.some(c => c.body.includes(jiraKey))) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `⚡ Jira 이슈 생성: [${jiraKey}](${process.env.JIRA_BASE_URL}/browse/${jiraKey})\n🔀 브랜치: ${branchName}`
+              });
+            }
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
