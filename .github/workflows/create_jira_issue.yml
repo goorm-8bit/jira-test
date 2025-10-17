@@ -71,17 +71,23 @@ jobs:
           script: |
             const jiraKey = '${{ steps.jira_issue_creation.outputs.issue }}';
             
+            // GitHub 이벤트 payload에서 issue 가져오기
+            const issue = context.payload.issue;
+            if (!issue) {
+              throw new Error("This workflow was not triggered by an issue event.");
+            }
+            
             // 1. GitHub 이슈 본문에 Jira 링크 추가
-            const body = `${{ github.event.issue.body }}\n\n---
-            **[Jira Issue](${ process.env.JIRA_BASE_URL }/browse/${jiraKey})**`;
+            const body = `${issue.body || ""}\n\n---**[ Jira Issue ](${process.env.JIRA_BASE_URL}/browse/${jiraKey})**`;
             
-            // 2. 중복 생성 방지 레이블 및 GitHub 레이블 추가
-            const labels = [...github.event.issue.labels.map(l => l.name), 'synced-from-jira'];
+            // 2. 기존 레이블 유지 + synced-from-jira 추가
+            const labels = [...(issue.labels?.map(l => l.name) || []), 'synced-from-jira'];
             
-            github.rest.issues.update({
-              issue_number: context.issue.number,
+            // 3. GitHub 이슈 업데이트
+            await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
+              issue_number: issue.number,
               body: body,
               labels: labels
             });
