@@ -112,7 +112,7 @@ jobs:
       - name: Jira 이슈 기반 브랜치 생성
         run: |
           TYPE=${{ steps.jira_issue_creation.outputs.type }}
-          JIRA_KEY=${{ steps.jira_issue_creation.outputs.issue }}
+          JIRA_KEY=${{ steps.jira_issue_creation.outputs.jiraKey }}
           ISSUE_NUMBER=${{ github.event.issue.number }}
           BRANCH_NAME="$TYPE/$JIRA_KEY-$ISSUE_NUMBER"
           git checkout develop
@@ -124,7 +124,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const jiraKey = '${{ steps.jira_issue_creation.outputs.issue }}';
+            const jiraKey = '${{ steps.jira_issue_creation.outputs.jiraKey }}';
             const issueNumber = ${{ github.event.issue.number }};
             const branchName = process.env.BRANCH_NAME;
             const comments = await github.rest.issues.listComments({
