@@ -103,7 +103,7 @@ jobs:
 
       - name: 브랜치 생성
         run: |
-          TYPE=$(echo "${{ github.event.issue.title }}" | grep -oP '(?<=\]\[).+?(?=\])' | tr '[:upper:]' '[:lower:]')
+          TYPE=$(echo "${{ github.event.issue.title }}" | grep -oP '(?<=\[).+?(?=\])' | head -1 | tr '[:upper:]' '[:lower:]')
           JIRA_KEY=${{ steps.jira_issue_creation.outputs.jiraKey }}
           ISSUE_NUMBER=${{ github.event.issue.number }}
           BRANCH_NAME="$TYPE/$JIRA_KEY-$ISSUE_NUMBER"
