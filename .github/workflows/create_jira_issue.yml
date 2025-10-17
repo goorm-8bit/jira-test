@@ -96,6 +96,11 @@ jobs:
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
 
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+
       - name: 브랜치 생성
         run: |
           TYPE=$(echo "${{ github.event.issue.title }}" | grep -oP '(?<=\]\[).+?(?=\])' | tr '[:upper:]' '[:lower:]')
@@ -103,6 +108,8 @@ jobs:
           ISSUE_NUMBER=${{ github.event.issue.number }}
           BRANCH_NAME="$TYPE/$JIRA_KEY-$ISSUE_NUMBER"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git checkout develop
+          git pull
           git checkout -b $BRANCH_NAME
           git push origin $BRANCH_NAME
 
