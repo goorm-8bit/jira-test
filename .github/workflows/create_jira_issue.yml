@@ -13,17 +13,17 @@ jobs:
       - name: Create Issue in Jira
         uses: atlassian/gajira-create-issue@v3
         with:
-        jira-base-url: ${{ secrets.JIRA_BASE_URL }}
-        jira-user-email: ${{ secrets.JIRA_USER_EMAIL }}
-        jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
-        project: ${{ secrets.JIRA_KEY }}
-        issueType:
-        summary: ${{ github.event.issue.title }}
-        description: |
-          [GitHub Issue Link](${{ github.event.issue.html_url }})
-
-          **Description:**
-          ${{ github.event.issue.body }}
+          jira-base-url: ${{ secrets.JIRA_BASE_URL }}
+          jira-user-email: ${{ secrets.JIRA_USER_EMAIL }}
+          jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
+          project: ${{ secrets.JIRA_KEY }}
+          issueType:
+          summary: ${{ github.event.issue.title }}
+          description: |
+            [GitHub Issue Link](${{ github.event.issue.html_url }})
+            
+            **Description:**
+            ${{ github.event.issue.body }}
 
       - name: Add Jira Key to Github Issue
         uses: actions/github-script@v6
