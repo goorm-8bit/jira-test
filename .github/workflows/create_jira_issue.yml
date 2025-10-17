@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create Issue in Jira (via REST API)
+      - name: Create Issue in Jira
         id: jira_issue_creation
         uses: actions/github-script@v6
         with:
@@ -77,10 +77,13 @@ jobs:
               throw new Error("This workflow was not triggered by an issue event.");
             }
             
-            // 1. GitHub 이슈 본문에 Jira 링크 추가
-            const body = `${issue.body || ""}\n\n---**[ Jira Issue ](${process.env.JIRA_BASE_URL}/browse/${jiraKey})**`;
+            // 1. 제목 앞에 [JIRA-KEY] 붙이기
+            const newTitle = `[${jiraKey}] ${issue.title}`;
             
-            // 2. 기존 레이블 유지 + synced-from-jira 추가
+            // 2. 본문 뒤에 Jira 링크 추가
+            const newBody = `${issue.body || ""}\n\n\n**[Jira Issue](${process.env.JIRA_BASE_URL}/browse/${jiraKey})**`;
+            
+            // 3. 기존 레이블 유지 + synced-from-jira 추가
             const labels = [...(issue.labels?.map(l => l.name) || []), 'synced-from-jira'];
             
             // 3. GitHub 이슈 업데이트
@@ -88,7 +91,8 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
-              body: body,
+              title: newTitle,
+              body: newBody,
               labels: labels
             });
         env:
