@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+
       - name: Jira 이슈 생성
         id: jira_issue_creation
         uses: actions/github-script@v6
@@ -105,16 +109,13 @@ jobs:
               labels: labels
             });
 
-      - uses: actions/checkout@v4
-        with:
-          ref: develop
-
       - name: Jira 이슈 기반 브랜치 생성
         run: |
           TYPE=${{ steps.jira_issue_creation.outputs.type }}
           JIRA_KEY=${{ steps.jira_issue_creation.outputs.jiraKey }}
           ISSUE_NUMBER=${{ github.event.issue.number }}
           BRANCH_NAME="$TYPE/$JIRA_KEY-$ISSUE_NUMBER"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           git checkout develop
           git pull
           git checkout -b $BRANCH_NAME
