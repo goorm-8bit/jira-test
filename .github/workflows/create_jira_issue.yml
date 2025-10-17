@@ -136,7 +136,6 @@ jobs:
             const body = [
               `Jira 이슈 생성: [${jiraKey}](${process.env.JIRA_BASE_URL}/browse/${jiraKey})`,
               `생성된 브랜치: \`${branchName}\``,
-              "Checkout 명령어",
               "```bash",
               `git checkout ${branchName}`,
               "```"
