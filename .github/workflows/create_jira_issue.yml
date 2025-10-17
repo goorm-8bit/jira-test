@@ -19,12 +19,11 @@ jobs:
             const JIRA_API_ENDPOINT = `${process.env.JIRA_BASE_URL}/rest/api/3/issue`;
             const JIRA_PROJECT_KEY = process.env.JIRA_PROJECT_KEY;
             
-            // Jira 요청 본문 (Body) 구성
             const issueData = {
               fields: {
                 project: { key: JIRA_PROJECT_KEY },
                 summary: context.payload.issue.title,
-                issuetype: { name: 'Story' }, // 👈 이슈 타입 설정
+                issuetype: { name: 'Story' },
                 description: {
                   type: 'doc',
                   version: 1,
@@ -41,7 +40,6 @@ jobs:
               }
             };
             
-            // Jira API 호출 (fetch 사용)
             const response = await fetch(JIRA_API_ENDPOINT, {
               method: 'POST',
               headers: {
@@ -58,15 +56,14 @@ jobs:
             
             const jiraIssue = await response.json();
             
-            // 다음 단계에서 사용할 Jira Key를 출력 (outputs)
             console.log(`Jira Issue created: ${jiraIssue.key}`);
-            core.setOutput('issue', jiraIssue.key); # 👈 다음 스텝에서 참조하기 위해 issue key를 output으로 설정
+            core.setOutput('issue', jiraIssue.key);
 
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          JIRA_PROJECT_KEY: ${{ env.JIRA_PROJECT_KEY }} # 👈 상위 env 변수 사용
+          JIRA_PROJECT_KEY: ${{ env.JIRA_PROJECT_KEY }}
 
       - name: Add Jira Key to Github Issue
         uses: actions/github-script@v6
